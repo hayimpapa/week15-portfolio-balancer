@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import TopNav from './components/TopNav.jsx'
+import AboutThisBuild from './components/AboutThisBuild.jsx'
 import Header from './components/Header.jsx'
 import TargetAllocationUpload from './components/TargetAllocationUpload.jsx'
 import TargetAllocationTable from './components/TargetAllocationTable.jsx'
@@ -20,6 +22,7 @@ export default function App() {
   const [targets, setTargets] = useState(() => loadJSON('targets', []))
   const [holdings, setHoldings] = useState(() => loadJSON('holdings', []))
   const [editingId, setEditingId] = useState(null)
+  const [activeTab, setActiveTab] = useState('rebalancer')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
   const reportRef = useRef(null)
@@ -129,16 +132,23 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen">
-      <Header
-        totalValue={analysis.totalValue}
-        hasData={canExport}
-        onOpenSettings={() => setSettingsOpen(true)}
-        onExport={handleExportPdf}
-        canExport={canExport && !exporting}
-      />
+    <div className="flex h-screen flex-col">
+      <TopNav activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+      <div className="flex-1 overflow-y-auto">
+        {activeTab === 'about' ? (
+          <AboutThisBuild />
+        ) : (
+          <>
+            <Header
+              totalValue={analysis.totalValue}
+              hasData={canExport}
+              onOpenSettings={() => setSettingsOpen(true)}
+              onExport={handleExportPdf}
+              canExport={canExport && !exporting}
+            />
+
+            <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
         {!hasTargets ? (
           <div className="mx-auto max-w-2xl">
             <TargetAllocationUpload onLoaded={setTargets} />
@@ -211,18 +221,21 @@ export default function App() {
               <ComparisonBarChart byType={analysis.byType} />
             </div>
           </div>
+              )}
+            </main>
+
+            <footer className="mx-auto max-w-7xl px-4 py-8 text-center text-xs text-ink-400 sm:px-6 no-print">
+              Portfolio Rebalancer · Prices are indicative and may be delayed. Not financial advice.
+            </footer>
+
+            <SettingsPanel
+              open={settingsOpen}
+              onClose={() => setSettingsOpen(false)}
+              onChanged={() => refreshAllPrices()}
+            />
+          </>
         )}
-      </main>
-
-      <footer className="mx-auto max-w-7xl px-4 py-8 text-center text-xs text-ink-400 sm:px-6 no-print">
-        Portfolio Rebalancer · Prices are indicative and may be delayed. Not financial advice.
-      </footer>
-
-      <SettingsPanel
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        onChanged={() => refreshAllPrices()}
-      />
+      </div>
     </div>
   )
 }
